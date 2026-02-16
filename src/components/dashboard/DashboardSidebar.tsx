@@ -1,0 +1,225 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+    LayoutDashboard,
+    Briefcase,
+    MessageSquare,
+    Wallet,
+    Settings,
+    ChevronLeft,
+    ChevronRight,
+    Users,
+    LifeBuoy,
+    Calendar,
+    BarChart3,
+    ClipboardCheck,
+    Lightbulb,
+    X
+} from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useSidebar } from "./SidebarContext";
+import { TechIcon } from "../TechIcon";
+
+const MAIN_NAV_ITEMS = [
+    { label: "DASHBOARD", icon: LayoutDashboard, href: "/" },
+    { label: "CAMPAIGNS", icon: Briefcase, href: "/campaigns" },
+    { label: "CREATORS", icon: Users, href: "/creators" },
+    { label: "APPLICATIONS", icon: ClipboardCheck, href: "/applications" },
+    { label: "CONTENT REVIEW", icon: ClipboardCheck, href: "/content-review" },
+    { label: "MESSAGES", icon: MessageSquare, href: "/messages" },
+    { label: "ANALYTICS", icon: BarChart3, href: "/analytics" },
+    { label: "FINANCE", icon: Wallet, href: "/finance" },
+    { label: "CALENDAR", icon: Calendar, href: "/calendar" },
+];
+
+const BOTTOM_NAV_ITEMS = [
+    { label: "SETTINGS", icon: Settings, href: "/settings" },
+    { label: "INSIGHTS", icon: Lightbulb, href: "/insights" },
+    { label: "SUPPORT", icon: LifeBuoy, href: "/support" },
+];
+
+export function DashboardSidebar() {
+    const pathname = usePathname();
+    const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar } = useSidebar();
+
+    const NavGroup = ({ items }: { items: typeof MAIN_NAV_ITEMS }) => (
+        <div className="space-y-1">
+            {items.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className="block"
+                        onClick={closeMobileSidebar} // Close on navigation
+                    >
+                        <div className={cn(
+                            "flex items-center px-6 py-3 transition-all group relative overflow-hidden border-l-2",
+                            isActive
+                                ? "border-[#a3e635] bg-white/5 text-white"
+                                : "border-transparent text-zinc-500 hover:text-white hover:bg-white/5"
+                        )}>
+                            <TechIcon
+                                icon={item.icon}
+                                isActive={isActive}
+                                className={cn("w-5 h-5 shrink-0 mr-3", isActive ? "text-[#a3e635]" : "text-zinc-500 group-hover:text-white")}
+                            />
+
+                            <span className={cn(
+                                "text-xs font-mono tracking-wide transition-all duration-300",
+                                isCollapsed && "lg:opacity-0 lg:w-0 lg:translate-x-10" // Only collapse on desktop
+                            )}>
+                                {item.label}
+                            </span>
+                        </div>
+                    </Link>
+                );
+            })}
+        </div>
+    );
+
+    return (
+        <>
+            {/* Mobile Backdrop */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
+                    onClick={closeMobileSidebar}
+                />
+            )}
+
+            <aside
+                className={cn(
+                    "fixed inset-y-0 left-0 z-50 h-screen flex flex-col transition-all duration-300 ease-in-out group/sidebar",
+                    "border-r border-zinc-800 bg-zinc-900/95 backdrop-blur-xl",
+                    // Mobile: Transform off-screen by default, slide in when open
+                    "lg:relative lg:translate-x-0",
+                    isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+                    // Desktop width handling
+                    isCollapsed ? "lg:w-20" : "lg:w-64",
+                    "w-64" // Always wide on mobile
+                )}
+            >
+                {/* 1. Background Effects (Widget Style) */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
+
+                {/* 2. Industrial Corner Accents (Right Side Only) */}
+                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-zinc-500/50 pointer-events-none" />
+                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-zinc-500/50 pointer-events-none" />
+
+                {/* 3. Logo & Collapse Header */}
+                <div className="h-16 flex items-center px-6 border-b border-white/5 relative z-10 justify-between">
+                    <div className="flex items-center">
+                        <div className="w-8 h-8 bg-zinc-950 rounded-sm flex items-center justify-center shrink-0 border border-zinc-800">
+                            <div className="w-4 h-4 bg-[#a3e635] rounded-full shadow-[0_0_8px_#a3e635]" />
+                        </div>
+                        <span className={cn(
+                            "ml-3 font-display font-bold text-white tracking-tight transition-opacity duration-300",
+                            isCollapsed && "lg:opacity-0 lg:w-0 lg:overflow-hidden"
+                        )}>
+                            CREONITY
+                        </span>
+                    </div>
+
+                    <button
+                        onClick={toggleSidebar}
+                        className={cn(
+                            "text-zinc-500 hover:text-white transition-colors p-1 rounded-sm hover:bg-white/5 hidden lg:block", // Hide toggle on mobile
+                            isCollapsed ? "hidden" : "block"
+                        )}
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {/* When collapsed, we need a way to expand. Usually clicking the logo or a dedicated button. 
+                    Let's put the expand button in the logo area when collapsed.
+                */}
+                    {isCollapsed && (
+                        <button
+                            onClick={toggleSidebar}
+                            className="hidden lg:flex absolute inset-0 w-full h-full items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50 z-20"
+                        >
+                            <ChevronRight className="w-4 h-4 text-white" />
+                        </button>
+                    )}
+                </div>
+
+                {/* 4. Navigation */}
+                <nav className="flex-1 flex flex-col py-6 px-0 overflow-y-auto overflow-x-hidden relative z-10">
+                    {/* Main Section */}
+                    <div className="flex-1">
+                        <NavGroup items={MAIN_NAV_ITEMS} />
+                    </div>
+
+                    {/* Promo Box (Only show when not collapsed) */}
+                    {!isCollapsed && (
+                        <SidebarPromoBox />
+                    )}
+
+                    {/* Bottom Section */}
+                    <div>
+                        <NavGroup items={BOTTOM_NAV_ITEMS} />
+                    </div>
+                </nav>
+
+                {/* 5. User Profile (Mini) */}
+                <div className="p-4 border-t border-white/5 relative z-10">
+                    <Link href="/profile" className={cn(
+                        "flex items-center gap-3 transition-all duration-300 group",
+                        isCollapsed ? "lg:justify-center" : ""
+                    )}>
+                        <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 group-hover:border-[#a3e635] transition-colors relative">
+                            <span className="text-[10px] font-bold text-white">KZ</span>
+                            {/* Online Status Dot */}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#a3e635] border-2 border-zinc-900 rounded-full" />
+                        </div>
+                        <div className={cn(
+                            "transition-opacity duration-300 overflow-hidden whitespace-nowrap",
+                            isCollapsed ? "lg:opacity-0 lg:w-0" : "opacity-100 w-auto"
+                        )}>
+                            <div className="text-xs font-bold text-white font-display group-hover:text-[#a3e635] transition-colors">Kai_Zen</div>
+                            <div className="text-[10px] text-zinc-500 font-mono">CREATOR_PRO</div>
+                        </div>
+                    </Link>
+                </div>
+            </aside>
+        </>
+    );
+}
+
+function SidebarPromoBox() {
+    const [isVisible, setIsVisible] = useState(true);
+
+    if (!isVisible) return null;
+
+    return (
+        <div className="px-4 mb-4 mt-auto">
+            <div className="relative p-3 bg-zinc-900/50 border border-zinc-800 rounded-sm overflow-hidden group hover:border-zinc-700 transition-colors">
+                {/* Close Button */}
+                <button
+                    onClick={() => setIsVisible(false)}
+                    className="absolute top-1.5 right-1.5 p-1 text-zinc-600 hover:text-white transition-colors z-10"
+                >
+                    <X className="w-3 h-3" />
+                </button>
+
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-1 h-1 bg-[#a3e635] rounded-full animate-pulse" />
+                    <span className="text-[9px] font-bold text-[#a3e635] uppercase tracking-wider font-mono">Pro_Offer</span>
+                </div>
+
+                {/* Content */}
+                <h4 className="text-xs font-bold text-white leading-tight mb-0.5 font-display">UPGRADE_NOW</h4>
+                <p className="text-[9px] text-zinc-500 mb-2 leading-tight">50% off your first 3 months.</p>
+
+                {/* Action */}
+                <button className="w-full py-1.5 bg-[#a3e635] hover:bg-[#b5f045] text-black text-[9px] font-mono font-bold uppercase tracking-wider rounded-sm transition-colors flex items-center justify-center gap-1">
+                    Claim_Offer
+                </button>
+            </div>
+        </div>
+    );
+}

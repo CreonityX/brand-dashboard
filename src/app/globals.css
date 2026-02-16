@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-brand-black: #050505;
+  --color-brand-white: #ffffff;
+  --color-brand-gray: #18181b;
+  /* Zinc 900 */
+
+  --color-tech-border: #27272a;
+  /* Zinc 800 */
+  --color-tech-accent: #ffffff;
+
+  --color-signal-success: #22c55e;
+  --color-signal-error: #ef4444;
+  --color-signal-warn: #eab308;
+
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-syne);
+}
+
+@layer base {
+  :root {
+    --background: var(--color-brand-black);
+    --foreground: var(--color-brand-white);
+  }
+
+  body {
+    @apply bg-brand-black text-white font-sans antialiased overflow-x-hidden selection:bg-[#a3e635] selection:text-black;
+  }
+}
+
+@layer utilities {
+  /* Industrial Component Styling */
+
+  /* Tech Border: Corner Brackets - Removed per user request */
+  .tech-border {
+    @apply relative border border-zinc-800 bg-zinc-950/50;
+  }
+
+  /* Tech Cut: 45deg corner cut */
+  .tech-cut {
+    clip-path: polygon(0 0,
+        100% 0,
+        100% calc(100% - 10px),
+        calc(100% - 10px) 100%,
+        0 100%);
+  }
+
+  /* Grid Background */
+  .bg-grid-zinc {
+    background-size: 40px 40px;
+    background-image:
+      linear-gradient(to right, rgba(39, 39, 42, 0.15) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(39, 39, 42, 0.15) 1px, transparent 1px);
+    opacity: 1;
+  }
+
+  /* Isometric Utilities */
+  .iso-scene {
+    transform: rotateX(55deg) rotateZ(-45deg);
+    transform-style: preserve-3d;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+}
