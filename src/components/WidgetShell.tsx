@@ -1,7 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
-import { Maximize2, MoreHorizontal } from "lucide-react";
+import { ReactNode, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface WidgetShellProps {
@@ -14,6 +14,23 @@ interface WidgetShellProps {
     allowResize?: boolean;
 }
 
+const shellVariants = {
+    hidden: {
+        opacity: 0,
+        y: 12,
+        scale: 0.98,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            duration: 0.45,
+            ease: [0.33, 1, 0.68, 1] as [number, number, number, number],
+        },
+    },
+};
+
 export function WidgetShell({
     children,
     title,
@@ -23,19 +40,29 @@ export function WidgetShell({
     indicatorState = "active",
     allowResize = true
 }: WidgetShellProps) {
-    return (
-        <div className={cn(
-            "group relative border border-zinc-800 bg-zinc-900/40 backdrop-blur-md overflow-hidden flex flex-col transition-all duration-500 ease-out hover:scale-[1.02] hover:border-zinc-700 hover:bg-zinc-900/60 hover:z-10",
-            allowResize && "resize-y min-h-[180px]",
-            className
-        )}>
+    const ref = useRef<HTMLDivElement>(null);
+    const isInView = useInView(ref, { once: true, margin: "-40px" });
 
-            {/* 1. Industrial Frame */}
+    return (
+        <motion.div
+            ref={ref}
+            variants={shellVariants}
+            initial="hidden"
+            animate={isInView ? "visible" : "hidden"}
+            className={cn(
+                "group relative border border-zinc-800 bg-zinc-900/40 backdrop-blur-md overflow-hidden flex flex-col",
+                "transition-[border-color,background-color,box-shadow] duration-300 ease-out",
+                "hover:border-zinc-700 hover:bg-zinc-900/60 hover:shadow-2xl hover:shadow-black/50 hover:z-10",
+                "focus-within:border-zinc-600",
+                allowResize && "resize-y min-h-[180px]",
+                className
+            )}>
+
             {/* Top Bar */}
-            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5 relative z-10">
+            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.03] relative z-10">
                 <div className="flex items-center gap-3">
                     {Icon && (
-                        <div className="w-6 h-6 flex items-center justify-center text-zinc-400">
+                        <div className="w-6 h-6 flex items-center justify-center text-zinc-400 bg-zinc-950/50 rounded-sm border border-zinc-800 group-hover:border-zinc-700 group-hover:text-zinc-300 transition-colors">
                             <Icon className="w-4 h-4" />
                         </div>
                     )}
@@ -45,45 +72,37 @@ export function WidgetShell({
                     </div>
                 </div>
 
-                {/* Status Indicator (Dot Grid) & Controls */}
+                {/* Status Indicator */}
                 <div className="flex items-center gap-4">
-                    {/* The Dot Grid Indicator: Gray Gray Green */}
                     <div className="flex gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
                         <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
                         <div className={cn(
-                            "w-1.5 h-1.5 rounded-full shadow-[0_0_4px_currentColor]",
-                            indicatorState === "active" ? "bg-[#a3e635] text-[#a3e635]" :
-                                indicatorState === "error" ? "bg-red-500 text-red-500" : "bg-zinc-500 text-zinc-500"
+                            "w-1.5 h-1.5 rounded-full",
+                            indicatorState === "active"
+                                ? "bg-[#a3e635] shadow-[0_0_6px_#a3e635]"
+                                : indicatorState === "error"
+                                    ? "bg-red-500 shadow-[0_0_6px_#ef4444]"
+                                    : "bg-zinc-500"
                         )} />
                     </div>
-
-                    {/* Corner Decoration */}
-                    <div className="w-2 h-2 border-t border-r border-zinc-500/50" />
                 </div>
             </div>
 
-            {/* 2. Content */}
+            {/* Content */}
             <div className="flex-1 relative z-10 overflow-hidden">
                 {children}
             </div>
 
-            {/* 3. Bottom Utility Bar (Optional, for resize hint) */}
+            {/* Resize Handle */}
             {allowResize && (
                 <div className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="w-1.5 h-1.5 border-b border-r border-zinc-500" />
                 </div>
             )}
 
-            {/* 4. Background Effects */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
-
-            {/* 5. Industrial Corner Brackets - REMOVED per user request */}
-            {/* <div className="absolute -top-[1px] -left-[1px] w-4 h-4 border-t-2 border-l-2 border-zinc-600 rounded-tl-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute -top-[1px] -right-[1px] w-4 h-4 border-t-2 border-r-2 border-zinc-600 rounded-tr-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute -bottom-[1px] -left-[1px] w-4 h-4 border-b-2 border-l-2 border-zinc-600 rounded-bl-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute -bottom-[1px] -right-[1px] w-4 h-4 border-b-2 border-r-2 border-zinc-600 rounded-br-sm pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" /> */}
-
-        </div>
+            {/* Background Noise */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
+        </motion.div>
     );
 }
