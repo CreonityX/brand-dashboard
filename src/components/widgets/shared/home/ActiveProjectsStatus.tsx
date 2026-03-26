@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Zap, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardWidgetShell } from "../DashboardWidgetShell";
+import Link from "next/link";
 
 const ACTIVE_GIGS = [
     { id: 1, brand: "Nike", title: "Air Max Campaign", progress: 75, due: "2d", color: "bg-white" },
@@ -81,9 +82,9 @@ export function ActiveProjectsStatus() {
                     ))}
                 </div>
 
-                <button className="w-full mt-6 py-2 border border-zinc-800 hover:border-zinc-600 bg-zinc-950 hover:bg-zinc-900 text-[10px] text-zinc-400 hover:text-white font-mono uppercase transition-all flex items-center justify-center gap-2 group relative overflow-hidden press-effect">
+                <Link href="/campaigns" className="w-full mt-6 py-2 border border-zinc-800 hover:border-zinc-600 bg-zinc-950 hover:bg-zinc-900 text-[10px] text-zinc-400 hover:text-white font-mono uppercase transition-all flex items-center justify-center gap-2 group relative overflow-hidden press-effect">
                     <span className="relative z-10 flex items-center gap-2">View All Projects <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" /></span>
-                </button>
+                </Link>
             </div>
         </DashboardWidgetShell>
     );

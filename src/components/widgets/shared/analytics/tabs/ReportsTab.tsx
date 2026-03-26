@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, Download, Plus, Mail, Calendar, Image, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const REPORT_TEMPLATES = [
     { id: 'executive', label: 'Executive Summary', desc: 'High-level KPIs for leadership' },
@@ -138,6 +139,7 @@ export function ReportsTab() {
                     {['PDF', 'Excel', 'PowerPoint', 'Google Sheets'].map(fmt => (
                         <button
                             key={fmt}
+                            onClick={() => toast.success(`Exporting as ${fmt}`, { description: "Your report will be ready shortly." })}
                             className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-sm text-xs font-mono text-zinc-400 hover:border-[#a3e635]/50 hover:text-[#a3e635] transition-colors"
                         >
                             <Download className="w-3.5 h-3.5" /> {fmt}

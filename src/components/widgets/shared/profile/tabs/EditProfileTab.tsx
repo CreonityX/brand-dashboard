@@ -3,6 +3,7 @@
 import { ProfileSection } from "@/components/widgets/shared/profile/ProfileComponents";
 import { InputGroup, SelectGroup, ToggleGroup } from "@/components/widgets/shared/settings/SettingsComponents";
 import { Plus, Upload, Globe, Twitter, Instagram, Linkedin } from "lucide-react";
+import { toast } from "sonner";
 
 export function EditProfileTab() {
     return (
@@ -107,10 +108,10 @@ export function EditProfileTab() {
 
             {/* Save Actions */}
             <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
-                <button className="px-6 py-2 border border-zinc-700 text-zinc-400 hover:text-white hover:border-white transition-colors text-xs uppercase font-mono">
+                <button onClick={() => toast("Changes discarded", { description: "Profile reverted to last saved state." })} className="px-6 py-2 border border-zinc-700 text-zinc-400 hover:text-white hover:border-white transition-colors text-xs uppercase font-mono">
                     Discard_Changes
                 </button>
-                <button className="px-6 py-2 bg-[#a3e635] text-black font-bold text-xs uppercase hover:bg-[#b0f545] transition-colors shadow-[0_0_15px_rgba(163,230,53,0.2)]">
+                <button onClick={() => toast.success("Profile saved successfully")} className="px-6 py-2 bg-[#a3e635] text-black font-bold text-xs uppercase hover:bg-[#b0f545] transition-colors shadow-[0_0_15px_rgba(163,230,53,0.2)]">
                     Save_Profile
                 </button>
             </div>

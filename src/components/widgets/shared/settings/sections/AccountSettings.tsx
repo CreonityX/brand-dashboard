@@ -2,6 +2,7 @@
 
 import { SettingsSection, InputGroup, SelectGroup } from "../SettingsComponents";
 import { Building2, Globe, FileText, Hash } from "lucide-react";
+import { toast } from "sonner";
 
 export function AccountSettings() {
     return (
@@ -49,7 +50,7 @@ export function AccountSettings() {
             </SettingsSection>
 
             <div className="flex justify-end pt-4 border-t border-white/5">
-                <button className="px-6 py-2 bg-[#a3e635] text-black font-bold text-xs uppercase hover:bg-[#b5f045] transition-colors rounded-sm shadow-[0_0_10px_rgba(163,230,53,0.2)]">
+                <button onClick={() => toast.success("Account settings saved")} className="px-6 py-2 bg-[#a3e635] text-black font-bold text-xs uppercase hover:bg-[#b5f045] transition-colors rounded-sm shadow-[0_0_10px_rgba(163,230,53,0.2)]">
                     Save_Changes
                 </button>
             </div>

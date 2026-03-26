@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Syne, Manrope, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const syne = Syne({
@@ -36,6 +37,19 @@ export default function RootLayout({
         className={`${syne.variable} ${manrope.variable} ${jetbrainsMono.variable} antialiased`}
       >
         {children}
+        <Toaster
+          theme="dark"
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: '#0a0a0a',
+              border: '1px solid #27272a',
+              color: '#ffffff',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+            },
+          }}
+        />
       </body>
     </html>
   );

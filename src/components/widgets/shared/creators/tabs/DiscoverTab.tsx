@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
     Search, MapPin, Grid3X3, List, Bookmark, BookmarkCheck,
-    Instagram, Youtube, CheckCircle, ChevronDown, SlidersHorizontal
+    Instagram, Youtube, CheckCircle, ChevronDown, SlidersHorizontal, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -24,15 +24,12 @@ export function DiscoverTab({ creatorId, onCloseProfile }: DiscoverTabProps) {
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState<"relevance" | "followers" | "engagement" | "newest" | "rating">("relevance");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [showFilters, setShowFilters] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
     const [savedIds, setSavedIds] = useState<Set<string>>(new Set(SAVED_CREATORS));
 
     // Filters
     const [location, setLocation] = useState("");
-    const [languages, setLanguages] = useState<string[]>([]);
     const [platforms, setPlatforms] = useState<string[]>([]);
-    const [followerMin, setFollowerMin] = useState(0);
-    const [followerMax, setFollowerMax] = useState(5000000);
     const [engagementMin, setEngagementMin] = useState(0);
     const [budgetMin, setBudgetMin] = useState(0);
     const [budgetMax, setBudgetMax] = useState(10000);
@@ -44,6 +41,24 @@ export function DiscoverTab({ creatorId, onCloseProfile }: DiscoverTabProps) {
 
     const toggleNiche = (n: string) => setNiches(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]);
     const togglePlatformFilter = (p: string) => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+
+    const activeFilterCount = [
+        location, ...platforms, ...niches,
+        engagementMin > 0 ? "eng" : "",
+        budgetMin > 0 ? "bmin" : "",
+        budgetMax < 10000 ? "bmax" : "",
+        verifiedOnly ? "v" : "",
+        availableNow ? "a" : "",
+        ratingMin > 0 ? "r" : "",
+        gigsMin > 0 ? "g" : "",
+    ].filter(Boolean).length;
+
+    const clearFilters = () => {
+        setLocation(""); setPlatforms([]); setNiches([]);
+        setEngagementMin(0); setBudgetMin(0); setBudgetMax(10000);
+        setVerifiedOnly(false); setAvailableNow(false);
+        setRatingMin(0); setGigsMin(0);
+    };
 
     const filtered = useMemo(() => {
         let list = [...DISCOVER_CREATORS];
@@ -78,115 +93,220 @@ export function DiscoverTab({ creatorId, onCloseProfile }: DiscoverTabProps) {
     const toggleSaved = (id: string) => setSavedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-full">
-            {/* Filters Sidebar */}
-            {!showFilters && (
-                <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-3 py-2 bg-zinc-900/40 border border-zinc-800 rounded-sm text-[10px] font-mono text-zinc-500 hover:text-[#a3e635] shrink-0">
-                    <SlidersHorizontal className="w-4 h-4" /> Filters
-                </button>
-            )}
-            <aside className={cn(
-                "flex-shrink-0 transition-all overflow-hidden",
-                showFilters ? "w-full lg:w-64 max-h-[600px] lg:max-h-none" : "w-0 max-h-0 lg:w-0"
-            )}>
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-sm p-4 space-y-4 max-h-[500px] lg:max-h-[calc(100vh-220px)] overflow-y-auto custom-scrollbar">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-[10px] font-bold text-zinc-500 font-display tracking-widest uppercase">Filters</h3>
-                        <button onClick={() => setShowFilters(!showFilters)} className="text-zinc-500 hover:text-white">
-                            <ChevronDown className={cn("w-4 h-4 transition-transform", !showFilters && "rotate-180")} />
+        <div className="space-y-4">
+            {/* Top Toolbar */}
+            <div className="flex flex-wrap items-center gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
+                    <input
+                        type="text"
+                        placeholder="Search by name, bio, tags..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-zinc-950/50 border border-zinc-800 rounded-sm text-xs text-white font-mono focus:outline-none focus:border-[#a3e635]"
+                    />
+                </div>
+
+                {/* Platform quick filter chips */}
+                <div className="flex gap-1.5">
+                    {CREATOR_PLATFORMS.map(p => (
+                        <button
+                            key={p}
+                            onClick={() => togglePlatformFilter(p)}
+                            className={cn(
+                                "px-2.5 py-1.5 rounded-sm border text-[10px] font-mono transition-colors",
+                                platforms.includes(p)
+                                    ? "border-[#a3e635]/50 text-[#a3e635] bg-[#a3e635]/10"
+                                    : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400"
+                            )}
+                        >
+                            {p}
                         </button>
-                    </div>
-                    <div className="space-y-3 text-[10px] font-mono">
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Location</label>
-                            <input type="text" placeholder="Country, city..." value={location} onChange={e => setLocation(e.target.value)} className="w-full px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
+                    ))}
+                </div>
+
+                {/* Sort */}
+                <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    className="px-3 py-2 bg-zinc-950/50 border border-zinc-800 rounded-sm text-xs text-zinc-400 font-mono focus:outline-none focus:border-[#a3e635]"
+                >
+                    <option value="relevance">Relevance</option>
+                    <option value="followers">Followers</option>
+                    <option value="engagement">Engagement</option>
+                    <option value="newest">Newest</option>
+                    <option value="rating">Rating</option>
+                </select>
+
+                {/* More filters */}
+                <button
+                    onClick={() => setShowFilters(f => !f)}
+                    className={cn(
+                        "flex items-center gap-2 px-3 py-2 border rounded-sm text-xs font-mono transition-colors",
+                        showFilters || activeFilterCount > 0
+                            ? "border-[#a3e635]/40 text-[#a3e635] bg-[#a3e635]/5"
+                            : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400"
+                    )}
+                >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    More Filters
+                    {activeFilterCount > 0 && (
+                        <span className="bg-[#a3e635] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                            {activeFilterCount}
+                        </span>
+                    )}
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showFilters && "rotate-180")} />
+                </button>
+
+                {/* View mode */}
+                <div className="flex border border-zinc-800 rounded-sm overflow-hidden">
+                    <button onClick={() => setViewMode("grid")} className={cn("p-2", viewMode === "grid" ? "bg-[#a3e635]/10 text-[#a3e635]" : "text-zinc-500 hover:text-zinc-300")}>
+                        <Grid3X3 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setViewMode("list")} className={cn("p-2", viewMode === "list" ? "bg-[#a3e635]/10 text-[#a3e635]" : "text-zinc-500 hover:text-zinc-300")}>
+                        <List className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Expanded filter panel */}
+            {showFilters && (
+                <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-sm space-y-4">
+                    <div className="flex flex-wrap gap-4 items-start">
+                        {/* Location */}
+                        <div className="space-y-1 text-[10px] font-mono">
+                            <label className="text-zinc-500 uppercase">Location</label>
+                            <input
+                                type="text"
+                                placeholder="Country, city..."
+                                value={location}
+                                onChange={e => setLocation(e.target.value)}
+                                className="block w-40 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]"
+                            />
                         </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Platform</label>
-                            <div className="flex flex-wrap gap-1">
-                                {CREATOR_PLATFORMS.map(p => (
-                                    <button key={p} onClick={() => togglePlatformFilter(p)} className={cn("px-2 py-0.5 rounded-sm border text-[9px]", platforms.includes(p) ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600")}>{p}</button>
-                                ))}
-                            </div>
+
+                        {/* Engagement */}
+                        <div className="space-y-1 text-[10px] font-mono">
+                            <label className="text-zinc-500 uppercase">Min Engagement %</label>
+                            <input
+                                type="number"
+                                min={0}
+                                max={20}
+                                value={engagementMin}
+                                onChange={e => setEngagementMin(Number(e.target.value))}
+                                className="block w-24 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]"
+                            />
                         </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Engagement (min %)</label>
-                            <input type="number" min={0} max={20} value={engagementMin} onChange={e => setEngagementMin(Number(e.target.value))} className="w-full px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
-                        </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Budget ($ {budgetMin} - $ {budgetMax})</label>
+
+                        {/* Budget */}
+                        <div className="space-y-1 text-[10px] font-mono">
+                            <label className="text-zinc-500 uppercase">Budget ($/post)</label>
                             <div className="flex gap-2">
-                                <input type="number" min={0} value={budgetMin} onChange={e => setBudgetMin(Number(e.target.value))} className="w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
-                                <input type="number" max={50000} value={budgetMax} onChange={e => setBudgetMax(Number(e.target.value))} className="w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
+                                <input type="number" min={0} placeholder="Min" value={budgetMin || ""} onChange={e => setBudgetMin(Number(e.target.value))} className="w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]" />
+                                <input type="number" placeholder="Max" value={budgetMax >= 10000 ? "" : budgetMax} onChange={e => setBudgetMax(e.target.value ? Number(e.target.value) : 10000)} className="w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]" />
                             </div>
                         </div>
-                        <div className="flex gap-4">
-                            <label className="flex items-center gap-1.5 cursor-pointer">
+
+                        {/* Rating */}
+                        <div className="space-y-1 text-[10px] font-mono">
+                            <label className="text-zinc-500 uppercase">Min Rating</label>
+                            <input type="number" min={0} max={5} step={0.5} value={ratingMin || ""} onChange={e => setRatingMin(Number(e.target.value))} className="block w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]" />
+                        </div>
+
+                        {/* Min gigs */}
+                        <div className="space-y-1 text-[10px] font-mono">
+                            <label className="text-zinc-500 uppercase">Min Gigs Done</label>
+                            <input type="number" min={0} value={gigsMin || ""} onChange={e => setGigsMin(Number(e.target.value))} className="block w-20 px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400 focus:outline-none focus:border-[#a3e635]" />
+                        </div>
+
+                        {/* Checkboxes */}
+                        <div className="space-y-2 text-[10px] font-mono pt-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" checked={verifiedOnly} onChange={e => setVerifiedOnly(e.target.checked)} className="rounded border-zinc-700" />
                                 <span className="text-zinc-400">Verified only</span>
                             </label>
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-1.5 cursor-pointer">
+                            <label className="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" checked={availableNow} onChange={e => setAvailableNow(e.target.checked)} className="rounded border-zinc-700" />
                                 <span className="text-zinc-400">Available now</span>
                             </label>
                         </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Niche / Category</label>
-                            <div className="flex flex-wrap gap-1">
-                                {NICHE_CATEGORIES.slice(0, 8).map(n => (
-                                    <button key={n} onClick={() => toggleNiche(n)} className={cn("px-2 py-0.5 rounded-sm border text-[9px]", niches.includes(n) ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600")}>{n}</button>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Min rating</label>
-                            <input type="number" min={0} max={5} step={0.1} value={ratingMin} onChange={e => setRatingMin(Number(e.target.value))} className="w-full px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
-                        </div>
-                        <div>
-                            <label className="text-zinc-500 block mb-1">Min gigs completed</label>
-                            <input type="number" min={0} value={gigsMin} onChange={e => setGigsMin(Number(e.target.value))} className="w-full px-2 py-1.5 bg-zinc-950/50 border border-zinc-800 rounded-sm text-zinc-400" />
-                        </div>
                     </div>
-                </div>
-            </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 min-w-0">
-                {/* Search, Sort, View Toggle */}
-                <div className="flex flex-wrap gap-3 mb-6">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
-                        <input type="text" placeholder="Search by name, bio, tags..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-zinc-950/50 border border-zinc-800 rounded-sm text-xs text-white font-mono focus:outline-none focus:border-[#a3e635]" />
-                    </div>
-                    <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-3 py-2 bg-zinc-950/50 border border-zinc-800 rounded-sm text-xs text-zinc-400 font-mono">
-                        <option value="relevance">Relevance</option>
-                        <option value="followers">Followers (high-low)</option>
-                        <option value="engagement">Engagement rate</option>
-                        <option value="newest">Newest joined</option>
-                        <option value="rating">Rating</option>
-                    </select>
-                    <div className="flex border border-zinc-800 rounded-sm overflow-hidden">
-                        <button onClick={() => setViewMode("grid")} className={cn("p-2", viewMode === "grid" ? "bg-[#a3e635]/10 text-[#a3e635]" : "text-zinc-500 hover:text-zinc-300")}><Grid3X3 className="w-4 h-4" /></button>
-                        <button onClick={() => setViewMode("list")} className={cn("p-2", viewMode === "list" ? "bg-[#a3e635]/10 text-[#a3e635]" : "text-zinc-500 hover:text-zinc-300")}><List className="w-4 h-4" /></button>
-                    </div>
-                </div>
-
-                {selectedCreator ? (
-                    <CreatorProfileDetail creator={selectedCreator} onClose={onCloseProfile} isSaved={savedIds.has(selectedCreator.id)} onToggleSaved={() => toggleSaved(selectedCreator.id)} />
-                ) : (
-                    <>
-                        <div className="text-[10px] text-zinc-500 font-mono mb-4">{filtered.length} creators</div>
-                        <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-3")}>
-                            {filtered.map(creator => (
-                                <CreatorCard key={creator.id} creator={creator} viewMode={viewMode} isSaved={savedIds.has(creator.id)} onToggleSaved={() => toggleSaved(creator.id)} />
+                    {/* Niche chips */}
+                    <div className="space-y-1 text-[10px] font-mono">
+                        <label className="text-zinc-500 uppercase">Niche / Category</label>
+                        <div className="flex flex-wrap gap-1.5">
+                            {NICHE_CATEGORIES.slice(0, 12).map(n => (
+                                <button
+                                    key={n}
+                                    onClick={() => toggleNiche(n)}
+                                    className={cn(
+                                        "px-2 py-1 rounded-sm border text-[9px] transition-colors",
+                                        niches.includes(n)
+                                            ? "border-[#a3e635]/50 text-[#a3e635] bg-[#a3e635]/10"
+                                            : "border-zinc-700 text-zinc-500 hover:border-zinc-600"
+                                    )}
+                                >
+                                    {n}
+                                </button>
                             ))}
                         </div>
-                    </>
-                )}
-            </div>
+                    </div>
+
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={clearFilters}
+                            className="flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 rounded-sm text-[10px] font-mono text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
+                        >
+                            <X className="w-3 h-3" /> Clear all filters
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Active filter chips */}
+            {activeFilterCount > 0 && !showFilters && (
+                <div className="flex flex-wrap gap-2">
+                    {location && <FilterChip label={`Location: ${location}`} onRemove={() => setLocation("")} />}
+                    {platforms.map(p => <FilterChip key={p} label={p} onRemove={() => togglePlatformFilter(p)} />)}
+                    {niches.map(n => <FilterChip key={n} label={n} onRemove={() => toggleNiche(n)} />)}
+                    {engagementMin > 0 && <FilterChip label={`Eng ≥ ${engagementMin}%`} onRemove={() => setEngagementMin(0)} />}
+                    {budgetMin > 0 && <FilterChip label={`Budget ≥ $${budgetMin}`} onRemove={() => setBudgetMin(0)} />}
+                    {budgetMax < 10000 && <FilterChip label={`Budget ≤ $${budgetMax}`} onRemove={() => setBudgetMax(10000)} />}
+                    {verifiedOnly && <FilterChip label="Verified only" onRemove={() => setVerifiedOnly(false)} />}
+                    {availableNow && <FilterChip label="Available now" onRemove={() => setAvailableNow(false)} />}
+                    {ratingMin > 0 && <FilterChip label={`Rating ≥ ${ratingMin}`} onRemove={() => setRatingMin(0)} />}
+                    {gigsMin > 0 && <FilterChip label={`Gigs ≥ ${gigsMin}`} onRemove={() => setGigsMin(0)} />}
+                    <button onClick={clearFilters} className="text-[9px] font-mono text-zinc-600 hover:text-zinc-400 transition-colors underline">Clear all</button>
+                </div>
+            )}
+
+            {/* Results */}
+            {selectedCreator ? (
+                <CreatorProfileDetail creator={selectedCreator} onClose={onCloseProfile} isSaved={savedIds.has(selectedCreator.id)} onToggleSaved={() => toggleSaved(selectedCreator.id)} />
+            ) : (
+                <>
+                    <div className="text-[10px] text-zinc-500 font-mono">{filtered.length} creator{filtered.length !== 1 ? "s" : ""}</div>
+                    <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "space-y-3")}>
+                        {filtered.map(creator => (
+                            <CreatorCard key={creator.id} creator={creator} viewMode={viewMode} isSaved={savedIds.has(creator.id)} onToggleSaved={() => toggleSaved(creator.id)} />
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
+    );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+    return (
+        <span className="flex items-center gap-1.5 px-2 py-1 bg-[#a3e635]/10 border border-[#a3e635]/20 rounded-sm text-[9px] font-mono text-[#a3e635]">
+            {label}
+            <button onClick={onRemove} className="hover:text-white transition-colors">
+                <X className="w-3 h-3" />
+            </button>
+        </span>
     );
 }
 
@@ -215,11 +335,11 @@ function CreatorCard({ creator, viewMode, isSaved, onToggleSaved }: {
                     </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={e => { e.preventDefault(); onToggleSaved(); }} className={cn("p-2 rounded-sm border", isSaved ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600")}>
+                    <button onClick={e => { e.preventDefault(); onToggleSaved(); }} className={cn("p-2 rounded-sm border transition-colors", isSaved ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600")}>
                         {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
                     </button>
-                    <Link href={`/creators?tab=discover&creator=${creator.id}`} className="px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50 hover:text-[#a3e635]">View Profile</Link>
-                    <Link href={`/creators?tab=discover&creator=${creator.id}&invite=1`} className="px-3 py-2 bg-[#a3e635]/10 border border-[#a3e635]/30 text-[10px] font-mono text-[#a3e635] rounded-sm hover:bg-[#a3e635]/20">Invite</Link>
+                    <Link href={`/creators?tab=discover&creator=${creator.id}`} className="px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50 hover:text-[#a3e635] transition-colors">View Profile</Link>
+                    <Link href={`/creators?tab=discover&creator=${creator.id}&invite=1`} className="px-3 py-2 bg-[#a3e635]/10 border border-[#a3e635]/30 text-[10px] font-mono text-[#a3e635] rounded-sm hover:bg-[#a3e635]/20 transition-colors">Invite</Link>
                 </div>
             </div>
         );
@@ -240,7 +360,7 @@ function CreatorCard({ creator, viewMode, isSaved, onToggleSaved }: {
                             <div className="text-[9px] font-mono px-2 py-0.5 mt-1 rounded-sm bg-zinc-800 text-zinc-400 inline-block">{creator.niche}</div>
                         </div>
                     </div>
-                    <button onClick={e => { e.preventDefault(); onToggleSaved(); }} className={cn("p-2 rounded-sm border shrink-0", isSaved ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity")}>
+                    <button onClick={e => { e.preventDefault(); onToggleSaved(); }} className={cn("p-2 rounded-sm border shrink-0 transition-colors", isSaved ? "border-[#a3e635] text-[#a3e635]" : "border-zinc-700 text-zinc-500 hover:border-zinc-600 opacity-0 group-hover:opacity-100")}>
                         {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
                     </button>
                 </div>
@@ -254,8 +374,8 @@ function CreatorCard({ creator, viewMode, isSaved, onToggleSaved }: {
                     {creator.ratePublic && <span className="text-[#a3e635] ml-auto">From ${creator.rate}</span>}
                 </div>
                 <div className="flex gap-2">
-                    <Link href={`/creators?tab=discover&creator=${creator.id}`} className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50 hover:text-[#a3e635] text-center">View Profile</Link>
-                    <Link href={`/creators?tab=discover&creator=${creator.id}&invite=1`} className="flex-1 px-3 py-2 bg-[#a3e635]/10 border border-[#a3e635]/30 text-[10px] font-mono text-[#a3e635] rounded-sm hover:bg-[#a3e635]/20 text-center">Invite</Link>
+                    <Link href={`/creators?tab=discover&creator=${creator.id}`} className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50 hover:text-[#a3e635] text-center transition-colors">View Profile</Link>
+                    <Link href={`/creators?tab=discover&creator=${creator.id}&invite=1`} className="flex-1 px-3 py-2 bg-[#a3e635]/10 border border-[#a3e635]/30 text-[10px] font-mono text-[#a3e635] rounded-sm hover:bg-[#a3e635]/20 text-center transition-colors">Invite</Link>
                 </div>
             </div>
         </div>

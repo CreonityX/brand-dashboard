@@ -42,64 +42,95 @@ const BOTTOM_NAV_ITEMS = [
     { label: "SUPPORT", icon: LifeBuoy, href: "/support" },
 ];
 
+// Defined OUTSIDE component so framer-motion never re-mounts nav items on re-render
+function NavItem({
+    item,
+    index,
+    staggerBase,
+    isActive,
+    isCollapsed,
+    onClose,
+}: {
+    item: { label: string; icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & { size?: number | string }>; href: string };
+    index: number;
+    staggerBase: number;
+    isActive: boolean;
+    isCollapsed: boolean;
+    onClose: () => void;
+}) {
+    return (
+        <Link key={item.href} href={item.href} className="block" onClick={onClose}>
+            <motion.div
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: (staggerBase + index) * 0.04, duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
+                className={cn(
+                    "flex items-center px-6 py-3 transition-all duration-200 group relative overflow-hidden border-l-2",
+                    isActive
+                        ? "border-[#a3e635] bg-white/5 text-white"
+                        : "border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.03]"
+                )}
+            >
+                {isActive && (
+                    <motion.div
+                        layoutId="sidebar-active-bg"
+                        className="absolute inset-0 bg-gradient-to-r from-[#a3e635]/[0.07] to-transparent pointer-events-none"
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                )}
+                <TechIcon
+                    icon={item.icon}
+                    isActive={isActive}
+                    className={cn("w-5 h-5 shrink-0 mr-3 relative z-10", isActive ? "text-[#a3e635]" : "text-zinc-500 group-hover:text-white")}
+                />
+                <span className={cn(
+                    "text-xs font-mono tracking-wide transition-all duration-300 relative z-10",
+                    isCollapsed && "lg:opacity-0 lg:w-0 lg:translate-x-10"
+                )}>
+                    {item.label}
+                </span>
+                <div className={cn(
+                    "absolute right-0 top-1/2 -translate-y-1/2 w-[2px] h-0 bg-zinc-600 transition-all duration-200",
+                    !isActive && "group-hover:h-4"
+                )} />
+            </motion.div>
+        </Link>
+    );
+}
+
+function NavGroup({
+    items,
+    staggerBase = 0,
+    pathname,
+    isCollapsed,
+    onClose,
+}: {
+    items: typeof MAIN_NAV_ITEMS;
+    staggerBase?: number;
+    pathname: string;
+    isCollapsed: boolean;
+    onClose: () => void;
+}) {
+    return (
+        <div className="space-y-0.5">
+            {items.map((item, index) => (
+                <NavItem
+                    key={item.href}
+                    item={item}
+                    index={index}
+                    staggerBase={staggerBase}
+                    isActive={pathname === item.href}
+                    isCollapsed={isCollapsed}
+                    onClose={onClose}
+                />
+            ))}
+        </div>
+    );
+}
+
 export function DashboardSidebar() {
     const pathname = usePathname();
     const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar } = useSidebar();
-
-    const NavGroup = ({ items, staggerBase = 0 }: { items: typeof MAIN_NAV_ITEMS; staggerBase?: number }) => (
-        <div className="space-y-0.5">
-            {items.map((item, index) => {
-                const isActive = pathname === item.href;
-                return (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className="block"
-                        onClick={closeMobileSidebar}
-                    >
-                        <motion.div
-                            initial={{ opacity: 0, x: -12 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: (staggerBase + index) * 0.04, duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
-                            className={cn(
-                                "flex items-center px-6 py-3 transition-all duration-200 group relative overflow-hidden border-l-2",
-                                isActive
-                                    ? "border-[#a3e635] bg-white/5 text-white"
-                                    : "border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.03]"
-                            )}>
-                            {/* Active background glow */}
-                            {isActive && (
-                                <motion.div
-                                    layoutId="sidebar-active-bg"
-                                    className="absolute inset-0 bg-gradient-to-r from-[#a3e635]/[0.07] to-transparent pointer-events-none"
-                                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                                />
-                            )}
-
-                            <TechIcon
-                                icon={item.icon}
-                                isActive={isActive}
-                                className={cn("w-5 h-5 shrink-0 mr-3 relative z-10", isActive ? "text-[#a3e635]" : "text-zinc-500 group-hover:text-white")}
-                            />
-
-                            <span className={cn(
-                                "text-xs font-mono tracking-wide transition-all duration-300 relative z-10",
-                                isCollapsed && "lg:opacity-0 lg:w-0 lg:translate-x-10"
-                            )}>
-                                {item.label}
-                            </span>
-
-                            {/* Hover indicator line */}
-                            <div className={cn(
-                                "absolute right-0 top-1/2 -translate-y-1/2 w-[2px] h-0 bg-zinc-600 transition-all duration-200",
-                                !isActive && "group-hover:h-4"
-                            )} />
-                        </motion.div>
-                    </Link>
-                );
-            })}
-        </div>
-    );
 
     return (
         <>
@@ -169,7 +200,12 @@ export function DashboardSidebar() {
                 {/* Navigation */}
                 <nav className="flex-1 flex flex-col py-6 px-0 overflow-y-auto overflow-x-hidden relative z-10 custom-scrollbar">
                     <div className="flex-1">
-                        <NavGroup items={MAIN_NAV_ITEMS} />
+                        <NavGroup
+                            items={MAIN_NAV_ITEMS}
+                            pathname={pathname}
+                            isCollapsed={isCollapsed}
+                            onClose={closeMobileSidebar}
+                        />
                     </div>
 
                     {/* Promo Box */}
@@ -187,7 +223,13 @@ export function DashboardSidebar() {
                     </AnimatePresence>
 
                     <div>
-                        <NavGroup items={BOTTOM_NAV_ITEMS} staggerBase={9} />
+                        <NavGroup
+                            items={BOTTOM_NAV_ITEMS}
+                            staggerBase={9}
+                            pathname={pathname}
+                            isCollapsed={isCollapsed}
+                            onClose={closeMobileSidebar}
+                        />
                     </div>
                 </nav>
 

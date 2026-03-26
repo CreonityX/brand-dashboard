@@ -2,6 +2,7 @@
 
 import { ProfileSection } from "@/components/widgets/shared/profile/ProfileComponents";
 import { Upload, FileText, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 export function VerificationTab() {
     return (
@@ -57,7 +58,7 @@ export function VerificationTab() {
                             <div className="text-xs font-bold text-zinc-300 uppercase">Phone Number</div>
                             <div className="text-sm text-white font-mono">+1 (555) 012-3456</div>
                         </div>
-                        <button className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-white px-2 py-1 rounded-sm uppercase font-bold transition-colors">
+                        <button onClick={() => toast.success("Verification code sent to +1 (555) 012-3456")} className="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-white px-2 py-1 rounded-sm uppercase font-bold transition-colors">
                             Verify
                         </button>
                     </div>
@@ -65,7 +66,7 @@ export function VerificationTab() {
             </ProfileSection>
 
             <div className="flex justify-end pt-6 border-t border-white/5">
-                <button className="px-6 py-2 bg-zinc-200 text-black font-bold text-xs uppercase hover:bg-white transition-colors opacity-50 cursor-not-allowed">
+                <button onClick={() => toast("Documents pending", { description: "Upload all required documents before submitting." })} className="px-6 py-2 bg-zinc-200 text-black font-bold text-xs uppercase hover:bg-white transition-colors opacity-50 cursor-not-allowed">
                     Submit_For_Review
                 </button>
             </div>

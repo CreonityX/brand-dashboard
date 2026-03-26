@@ -1,11 +1,17 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Download, X, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CAMPAIGNS_LIST } from "@/lib/mock-data";
+import { toast } from "sonner";
 
 export function PerformanceTab({ campaignId }: { campaignId: string }) {
     const campaign = CAMPAIGNS_LIST.find(c => c.id === campaignId);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportFormat, setExportFormat] = useState("pdf");
+    const [exportRange, setExportRange] = useState("all");
+
     if (!campaign) return null;
 
     const metrics = [
@@ -19,11 +25,21 @@ export function PerformanceTab({ campaignId }: { campaignId: string }) {
         { label: "ROI", value: "450%", change: "+15%" },
     ];
 
+    const handleExport = () => {
+        toast.success(`Exporting report as ${exportFormat.toUpperCase()}`, {
+            description: `${campaign.name} • ${exportRange === "all" ? "Full campaign data" : "Last 30 days"}`,
+        });
+        setShowExportModal(false);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h2 className="text-xs font-bold text-zinc-500 font-display tracking-widest uppercase">Key Metrics</h2>
-                <button className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50">
+                <button
+                    onClick={() => setShowExportModal(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 text-[10px] font-mono text-zinc-400 rounded-sm hover:border-[#a3e635]/50 hover:text-[#a3e635] transition-colors"
+                >
                     <Download className="w-4 h-4" /> Export report
                 </button>
             </div>
@@ -81,6 +97,66 @@ export function PerformanceTab({ campaignId }: { campaignId: string }) {
                     </div>
                 </div>
             </div>
+
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowExportModal(false)} />
+                    <div className="relative z-10 w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+                            <div>
+                                <h3 className="text-sm font-bold text-white font-display uppercase">Export Report</h3>
+                                <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{campaign.name}</p>
+                            </div>
+                            <button onClick={() => setShowExportModal(false)} className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-sm">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="px-6 py-5 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-mono text-zinc-500 uppercase">Format</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {["pdf", "excel", "csv"].map(fmt => (
+                                        <button
+                                            key={fmt}
+                                            onClick={() => setExportFormat(fmt)}
+                                            className={cn(
+                                                "py-2 border rounded-sm text-[10px] font-bold font-mono uppercase transition-colors",
+                                                exportFormat === fmt
+                                                    ? "bg-[#a3e635]/10 border-[#a3e635]/50 text-[#a3e635]"
+                                                    : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400"
+                                            )}
+                                        >
+                                            {fmt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-mono text-zinc-500 uppercase">Date range</label>
+                                <select
+                                    value={exportRange}
+                                    onChange={e => setExportRange(e.target.value)}
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-sm px-3 py-2 text-xs text-zinc-400 font-mono focus:outline-none focus:border-[#a3e635]/50"
+                                >
+                                    <option value="all">Full campaign</option>
+                                    <option value="30">Last 30 days</option>
+                                    <option value="7">Last 7 days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 px-6 py-4 border-t border-zinc-800">
+                            <button onClick={() => setShowExportModal(false)} className="flex-1 py-2 border border-zinc-700 text-zinc-400 text-xs uppercase font-mono rounded-sm transition-colors">Cancel</button>
+                            <button
+                                onClick={handleExport}
+                                className="flex-1 py-2 bg-[#a3e635] text-black font-bold text-xs uppercase rounded-sm hover:bg-[#bef264] transition-colors flex items-center justify-center gap-2"
+                            >
+                                <FileText className="w-3.5 h-3.5" /> Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

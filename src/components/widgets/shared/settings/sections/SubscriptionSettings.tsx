@@ -3,6 +3,7 @@
 import { SettingsSection } from "../SettingsComponents";
 import { Check, Download, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function SubscriptionSettings() {
     return (
@@ -69,7 +70,7 @@ function BillingRow({ date, desc, amount, status }: { date: string, desc: string
                 <span className="text-[10px] font-bold text-[#a3e635] bg-[#a3e635]/10 px-2 py-0.5 rounded-sm uppercase">{status}</span>
             </td>
             <td className="p-3 text-right">
-                <button className="text-zinc-500 hover:text-white transition-colors">
+                <button onClick={() => toast.success("Invoice downloaded")} className="text-zinc-500 hover:text-white transition-colors">
                     <Download className="w-4 h-4" />
                 </button>
             </td>
@@ -106,7 +107,7 @@ function PlanCard({ title, price, features, active = false }: { title: string, p
                 ))}
             </ul>
 
-            <button className={cn(
+            <button onClick={() => active ? toast("Current plan", { description: "Contact support to manage your plan." }) : toast.success(`Upgrade to ${title}`, { description: "Our team will be in touch to complete your upgrade." })} className={cn(
                 "w-full py-2.5 text-xs font-bold uppercase tracking-wide border transition-all",
                 active
                     ? "border-[#a3e635] text-[#a3e635] hover:bg-[#a3e635] hover:text-black"
